@@ -1,0 +1,66 @@
+S3_ACCESS_KEY_ID=9998d6757e276cf9f1edbd325b7083a6 S3_SECRET_ACCESS_KEY=55af75d8eb6b99f189f6a35f855336ea62cd9c4751a5cf4337c53c1d3f497ac2
+
+## 1. 部署在本地
+
+直接在 mac/windows 本地启动
+
+在此我们已假设你的本地有一个 5432 端口可用，账号为 postgres ，密码是 mysecretpassword 的 pg 实例，在 localhost:5432 可用。
+
+```fish
+$ docker run -it --rm -p 39455:3210 \
+-e DATABASE_URL=postgres://postgres:mysecretpassword@host.docker.internal:5432/postgres \
+-e KEY_VAULTS_SECRET=jgwsK28dspyVQoIf8/M3IIHl1h6LYYceSYNXeLpy6uk= \
+-e NEXT_AUTH_SECRET=3904039cd41ea1bdf6c93db0db96e250 \
+-e NEXT_AUTH_SSO_PROVIDERS=auth0 \
+-e AUTH0_CLIENT_ID=xxxxxx \
+-e AUTH0_CLIENT_SECRET=cSX_xxxxx \
+-e AUTH0_ISSUER=https://lobe-chat-demo.us.auth0.com \
+-e NEXTAUTH_URL=http://localhost:3210/api/auth \
+-e S3_ACCESS_KEY_ID=xxxxxxxxxx \
+-e S3_SECRET_ACCESS_KEY=xxxxxxxxxx \
+-e S3_ENDPOINT=https://xxxxxxxxxx.r2.cloudflarestorage.com \
+-e S3_BUCKET=lobechat \
+-e NEXT_PUBLIC_S3_DOMAIN=https://s3-for-lobechat.your-domain.com \
+lobehub/lobe-chat-database
+```
+
+## 2. 部署在服务器
+
+<Steps>
+
+### 创建 pg 实例（注意：以下命令仅用于演示，因为这个 pg 实例并没有包含持久化部分）
+
+```
+docker run --name my-postgres --network pg -e POSTGRES_PASSWORD=mysecretpassword -p 5432:5432 -d postgres
+```
+
+### 创建一个 `lobe-chat.env` 文件用于存放环境变量：
+
+```shell
+# DB 必须
+KEY_VAULTS_SECRET=jgwsK28dspyVQoIf8/M3IIHl1h6LYYceSYNXeLpy6uk=
+DATABASE_URL=postgres://postgres:mysecretpassword@my-postgres:5432/postgres
+
+# NEXT_AUTH 相关
+NEXT_AUTH_SECRET=3904039cd41ea1bdf6c93db0db96e250
+NEXT_AUTH_SSO_PROVIDERS=auth0
+NEXTAUTH_URL=https://your-prod-domain.com/api/auth
+AUTH0_CLIENT_ID=xxxxxx
+AUTH0_CLIENT_SECRET=cSX_xxxxx
+AUTH0_ISSUER=https://lobe-chat-demo.us.auth0.com
+
+# S3 相关
+S3_ACCESS_KEY_ID=xxxxxxxxxx
+S3_SECRET_ACCESS_KEY=xxxxxxxxxx
+S3_ENDPOINT=https://xxxxxxxxxx.r2.cloudflarestorage.com
+S3_BUCKET=lobechat
+NEXT_PUBLIC_S3_DOMAIN=https://s3-for-lobechat.your-domain.com
+```
+
+### 启动 lobe-chat-database docker 镜像
+
+```sh
+docker run -it -d -p 3210:3210 --network pg --env-file lobe-chat.env --name lobe-chat-database lobehub/lobe-chat-database
+```
+
+</Steps>
